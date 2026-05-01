@@ -12,7 +12,7 @@ const DB = {
             type: "execute",
             stmt: {
               sql: sql,
-              args: args,
+              named_args: args,
             },
           },
           { type: "close" },
