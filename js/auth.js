@@ -3,8 +3,11 @@ const AUTH = {
 
   async register(username, email, password) {
     const existing = await DB.query(
-      "SELECT id FROM users WHERE email = ? OR username = ?",
-      [{ type: "text", value: email }, { type: "text", value: username }]
+      "SELECT id FROM users WHERE email = :email OR username = :username",
+      [
+        { name: "email", value: { type: "text", value: email } },
+        { name: "username", value: { type: "text", value: username } },
+      ]
     );
     if (existing && existing.rows.length > 0) {
       throw new Error("Username বা Email আগে থেকেই আছে!");
@@ -12,12 +15,12 @@ const AUTH = {
 
     const id = crypto.randomUUID();
     await DB.query(
-      "INSERT INTO users (id, username, email, password) VALUES (?, ?, ?, ?)",
+      "INSERT INTO users (id, username, email, password) VALUES (:id, :username, :email, :password)",
       [
-        { type: "text", value: id },
-        { type: "text", value: username },
-        { type: "text", value: email },
-        { type: "text", value: password },
+        { name: "id", value: { type: "text", value: id } },
+        { name: "username", value: { type: "text", value: username } },
+        { name: "email", value: { type: "text", value: email } },
+        { name: "password", value: { type: "text", value: password } },
       ]
     );
 
@@ -28,8 +31,11 @@ const AUTH = {
 
   async login(email, password) {
     const result = await DB.query(
-      "SELECT id, username, email, avatar, bio FROM users WHERE email = ? AND password = ?",
-      [{ type: "text", value: email }, { type: "text", value: password }]
+      "SELECT id, username, email, avatar, bio FROM users WHERE email = :email AND password = :password",
+      [
+        { name: "email", value: { type: "text", value: email } },
+        { name: "password", value: { type: "text", value: password } },
+      ]
     );
 
     if (!result || result.rows.length === 0) {
