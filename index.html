@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jahid Taj Chat</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      background: #0f0f1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', sans-serif;
+      color: #fff;
+    }
+    .container {
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .logo h1 {
+      font-size: 2rem;
+      background: linear-gradient(135deg, #6c63ff, #ff6584);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .logo p { color: #888; margin-top: 5px; }
+    .tabs {
+      display: flex;
+      background: #1a1a2e;
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 24px;
+    }
+    .tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      border-radius: 10px;
+      cursor: pointer;
+      color: #888;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    .tab.active {
+      background: #6c63ff;
+      color: #fff;
+    }
+    .form { display: none; flex-direction: column; gap: 16px; }
+    .form.active { display: flex; }
+    .form input {
+      padding: 14px 16px;
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: border 0.3s;
+    }
+    .form input:focus { border-color: #6c63ff; }
+    .btn {
+      padding: 14px;
+      background: linear-gradient(135deg, #6c63ff, #ff6584);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.3s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .error {
+      color: #ff6584;
+      text-align: center;
+      font-size: 0.9rem;
+      min-height: 20px;
+    }
+    .loading { opacity: 0.7; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <h1>Jahid Taj Chat</h1>
+      <p>সবার সাথে কানেক্ট থাকো</p>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('login')">Login</div>
+      <div class="tab" onclick="switchTab('register')">Register</div>
+    </div>
+
+    <!-- Login Form -->
+    <div class="form active" id="loginForm">
+      <input type="email" id="loginEmail" placeholder="Email" />
+      <input type="password" id="loginPassword" placeholder="Password" />
+      <div class="error" id="loginError"></div>
+      <button class="btn" onclick="handleLogin()">Login করো</button>
+    </div>
+
+    <!-- Register Form -->
+    <div class="form" id="registerForm">
+      <input type="text" id="regUsername" placeholder="Username" />
+      <input type="email" id="regEmail" placeholder="Email" />
+      <input type="password" id="regPassword" placeholder="Password" />
+      <div class="error" id="registerError"></div>
+      <button class="btn" onclick="handleRegister()">Register করো</button>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // Check already logged in
+    if (AUTH.getSession()) window.location.href = "app.html";
+
+    function switchTab(tab) {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".form").forEach(f => f.classList.remove("active"));
+      document.querySelector(`#${tab}Form`).classList.add("active");
+      event.target.classList.add("active");
+    }
+
+    async function handleLogin() {
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      const errorEl = document.getElementById("loginError");
+      errorEl.textContent = "";
+
+      if (!email || !password) {
+        errorEl.textContent = "সব field পূরণ করো!";
+        return;
+      }
+
+      try {
+        document.querySelector("#loginForm .btn").classList.add("loading");
+        await DB.init();
+        await AUTH.login(email, password);
+        window.location.href = "app.html";
+      } catch (err) {
+        errorEl.textContent = err.message;
+      } finally {
+        document.querySelector("#loginForm .btn").classList.remove("loading");
+      }
+    }
+
+    async function handleRegister() {
+      const username = document.getElementById("regUsername").value.trim();
+      const email = document.getElementById("regEmail").value.trim();
+      const password = document.getElementById("regPassword").value;
+      const errorEl = document.getElementById("registerError");
+      errorEl.textContent = "";
+
+      if (!username || !email || !password) {
+        errorEl.textContent = "সব field পূরণ করো!";
+        return;
+      }
+
+      try {
+        document.querySelector("#registerForm .btn").classList.add("loading");
+        await DB.init();
+        await AUTH.register(username, email, password);
+        window.location.href = "app.html";
+      } catch (err) {
+        errorEl.textContent = err.message;
+      } finally {
+        document.querySelector("#registerForm .btn").classList.remove("loading");
+      }
+    }
+  </script>
+</body>
+</html>
