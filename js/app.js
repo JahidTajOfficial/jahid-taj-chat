@@ -13,6 +13,14 @@ const APP = {
     await this.loadChats();
   },
 
+  getVal(row, cols, name) {
+    const idx = cols.findIndex(c => c.name === name);
+    if (idx === -1) return "";
+    const v = row[idx];
+    if (v && typeof v === "object") return v.value !== undefined ? v.value : v;
+    return v || "";
+  },
+
   async loadChats() {
     const user = AUTH.getSession();
     const list = document.getElementById("chatList");
@@ -25,15 +33,16 @@ const APP = {
       );
 
       if (!result || result.rows.length === 0) {
-        list.innerHTML = '<div class="empty-state">কোনো user নেই।</div>';
+        list.innerHTML = '<div class="empty-state">কোনো user নেই। আরেকটা account বানাও।</div>';
         return;
       }
 
       list.innerHTML = "";
+      const cols = result.cols;
       result.rows.forEach((row) => {
-        const id = row[0];
-        const username = row[1];
-        const avatar = row[2];
+        const id = APP.getVal(row, cols, "id");
+        const username = APP.getVal(row, cols, "username");
+        const avatar = APP.getVal(row, cols, "avatar");
 
         const item = document.createElement("div");
         item.className = "chat-item";
@@ -43,7 +52,7 @@ const APP = {
             <div class="chat-name">${username}</div>
             <div class="chat-preview">Click to chat</div>
           </div>`;
-        item.onclick = () => this.openChat({ id, username, avatar });
+        item.onclick = () => APP.openChat({ id, username, avatar });
         list.appendChild(item);
       });
     } catch (err) {
@@ -68,7 +77,7 @@ const APP = {
     await this.loadMessages();
 
     if (this.messageInterval) clearInterval(this.messageInterval);
-    this.messageInterval = setInterval(() => this.loadMessages(), 3000);
+    this.messageInterval = setInterval(() => APP.loadMessages(), 3000);
   },
 
   async loadMessages() {
@@ -98,12 +107,14 @@ const APP = {
         return;
       }
 
+      const cols = result.cols;
       result.rows.forEach((row) => {
-        const senderId = row[1];
-        const type = row[2];
-        const content = row[3];
-        const mediaUrl = row[4];
-        const time = new Date(row[5] * 1000).toLocaleTimeString("bn", {
+        const senderId = APP.getVal(row, cols, "sender_id");
+        const type = APP.getVal(row, cols, "type");
+        const content = APP.getVal(row, cols, "content");
+        const mediaUrl = APP.getVal(row, cols, "media_url");
+        const createdAt = APP.getVal(row, cols, "created_at");
+        const time = new Date(createdAt * 1000).toLocaleTimeString("bn", {
           hour: "2-digit", minute: "2-digit",
         });
         const isSent = senderId === user.id;
@@ -167,7 +178,7 @@ const APP = {
       const file = e.target.files[0];
       if (!file) return;
       const user = AUTH.getSession();
-      const chat = this.currentChat;
+      const chat = APP.currentChat;
       if (!chat) return;
 
       try {
@@ -186,7 +197,7 @@ const APP = {
           ]
         );
 
-        await this.loadMessages();
+        await APP.loadMessages();
       } catch (err) {
         alert("Upload failed: " + err.message);
       }
@@ -201,7 +212,7 @@ const APP = {
   showNewChat() {
     const username = prompt("Username লেখো:");
     if (!username) return;
-    this.searchUser(username);
+    APP.searchUser(username);
   },
 
   async searchUser(username) {
@@ -216,8 +227,13 @@ const APP = {
         return;
       }
 
+      const cols = result.cols;
       const row = result.rows[0];
-      this.openChat({ id: row[0], username: row[1], avatar: row[2] });
+      APP.openChat({
+        id: APP.getVal(row, cols, "id"),
+        username: APP.getVal(row, cols, "username"),
+        avatar: APP.getVal(row, cols, "avatar"),
+      });
     } catch (err) {
       alert("Error: " + err.message);
     }
@@ -235,7 +251,7 @@ const APP = {
     this.currentTab = tab;
     document.querySelectorAll(".nav-tab").forEach((t) => t.classList.remove("active"));
     el.classList.add("active");
-    if (tab === "chats") this.loadChats();
+    if (tab === "chats") APP.loadChats();
     else document.getElementById("chatList").innerHTML = '<div class="empty-state">শীঘ্রই আসছে!</div>';
   },
 };
