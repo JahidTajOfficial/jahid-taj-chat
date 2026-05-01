@@ -17,8 +17,10 @@ const APP = {
     const idx = cols.findIndex(c => c.name === name);
     if (idx === -1) return "";
     const v = row[idx];
-    if (v && typeof v === "object") return v.value !== undefined ? v.value : v;
-    return v || "";
+    if (v === null || v === undefined) return "";
+    if (typeof v === "object" && v.value !== undefined) return v.value;
+    if (typeof v === "object" && v.type === "null") return "";
+    return String(v);
   },
 
   async loadChats() {
@@ -114,9 +116,9 @@ const APP = {
         const content = APP.getVal(row, cols, "content");
         const mediaUrl = APP.getVal(row, cols, "media_url");
         const createdAt = APP.getVal(row, cols, "created_at");
-        const time = new Date(createdAt * 1000).toLocaleTimeString("bn", {
+        const time = createdAt ? new Date(Number(createdAt) * 1000).toLocaleTimeString("bn", {
           hour: "2-digit", minute: "2-digit",
-        });
+        }) : "";
         const isSent = senderId === user.id;
 
         const msg = document.createElement("div");
@@ -156,18 +158,21 @@ const APP = {
 
     input.value = "";
 
-    await DB.query(
-      "INSERT INTO messages (id, sender_id, receiver_id, type, content) VALUES (:id, :sid, :rid, 'text', :content)",
-      [
-        { name: "id", value: { type: "text", value: crypto.randomUUID() } },
-        { name: "sid", value: { type: "text", value: user.id } },
-        { name: "rid", value: { type: "text", value: chat.id } },
-        { name: "content", value: { type: "text", value: content } },
-      ]
-    );
-
-    await this.loadMessages();
-    await this.loadChats();
+    try {
+      await DB.query(
+        "INSERT INTO messages (id, sender_id, receiver_id, type, content) VALUES (:id, :sid, :rid, 'text', :content)",
+        [
+          { name: "id", value: { type: "text", value: crypto.randomUUID() } },
+          { name: "sid", value: { type: "text", value: user.id } },
+          { name: "rid", value: { type: "text", value: chat.id } },
+          { name: "content", value: { type: "text", value: content } },
+        ]
+      );
+      await this.loadMessages();
+      await this.loadChats();
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
   },
 
   async attachFile() {
