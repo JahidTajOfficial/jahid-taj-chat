@@ -1,9 +1,6 @@
 const DB = {
   async query(sql, args = []) {
-    const baseUrl = CONFIG.TURSO_URL
-      .replace("libsql://", "https://");
-
-    const response = await fetch(baseUrl + "/v2/pipeline", {
+    const response = await fetch(CONFIG.TURSO_URL + "/v2/pipeline", {
       method: "POST",
       headers: {
         "Authorization": "Bearer " + CONFIG.TURSO_TOKEN,
@@ -15,9 +12,7 @@ const DB = {
             type: "execute",
             stmt: {
               sql: sql,
-              named_args: args.map(function(a, i) {
-                return { name: String(i), value: a };
-              }),
+              args: args,
             },
           },
           { type: "close" },
@@ -47,7 +42,7 @@ const DB = {
       avatar TEXT DEFAULT '',
       bio TEXT DEFAULT '',
       created_at INTEGER DEFAULT (strftime('%s','now'))
-    )`, []);
+    )`);
 
     await this.query(`CREATE TABLE IF NOT EXISTS messages (
       id TEXT PRIMARY KEY,
@@ -59,7 +54,7 @@ const DB = {
       content TEXT NOT NULL,
       media_url TEXT DEFAULT '',
       created_at INTEGER DEFAULT (strftime('%s','now'))
-    )`, []);
+    )`);
 
     await this.query(`CREATE TABLE IF NOT EXISTS groups (
       id TEXT PRIMARY KEY,
@@ -68,14 +63,14 @@ const DB = {
       avatar TEXT DEFAULT '',
       created_by TEXT NOT NULL,
       created_at INTEGER DEFAULT (strftime('%s','now'))
-    )`, []);
+    )`);
 
     await this.query(`CREATE TABLE IF NOT EXISTS group_members (
       group_id TEXT NOT NULL,
       user_id TEXT NOT NULL,
       role TEXT DEFAULT 'member',
       joined_at INTEGER DEFAULT (strftime('%s','now'))
-    )`, []);
+    )`);
 
     await this.query(`CREATE TABLE IF NOT EXISTS channels (
       id TEXT PRIMARY KEY,
@@ -84,7 +79,7 @@ const DB = {
       avatar TEXT DEFAULT '',
       created_by TEXT NOT NULL,
       created_at INTEGER DEFAULT (strftime('%s','now'))
-    )`, []);
+    )`);
 
     await this.query(`CREATE TABLE IF NOT EXISTS stories (
       id TEXT PRIMARY KEY,
@@ -93,7 +88,7 @@ const DB = {
       media_url TEXT NOT NULL,
       created_at INTEGER DEFAULT (strftime('%s','now')),
       expires_at INTEGER NOT NULL
-    )`, []);
+    )`);
 
     console.log("DB ready!");
   },
